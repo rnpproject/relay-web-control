@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#035AA6">
+<title>Relay Control Remote</title>
+<style>
+:root{
+  --blue:#035AA6;--sky:#049DD9;--cyan:#04B2D9;--yellow:#F2C438;--grey:#F2F2F2;
+  --bg:var(--grey);--card:#fff;--text:#0e2a47;--muted:#5d6f83;--line:#dfe5ec;
+  --icon-bg:#e6f2fb;--shadow:0 8px 24px rgba(3,90,166,.10);
+  --grad:linear-gradient(135deg,var(--blue),var(--cyan));
+}
+[data-theme=dark]{
+  --bg:#0a1a2b;--card:#10263c;--text:#e7eff8;--muted:#8da3b8;--line:#1f3a56;
+  --icon-bg:#17334d;--shadow:0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:radial-gradient(900px 380px at 50% -160px,rgba(4,178,217,.28),transparent),var(--bg);
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  transition:background .3s,color .3s;
+}
+.wrap{max-width:960px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 18px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:42px;height:42px;border-radius:13px;background:var(--grad);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 6px 16px rgba(3,90,166,.35)}
+.logo svg{width:22px;height:22px}
+h1{font-size:clamp(17px,4.5vw,22px);margin:0;line-height:1.1}
+.sub{font-size:12px;color:var(--muted)}
+.actions{display:flex;gap:8px}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s;flex:none}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:18px;height:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px 20px;margin-bottom:18px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:#9aa9b8;flex:none}
+.chip.ok .dot{background:var(--cyan);box-shadow:0 0 0 3px rgba(4,178,217,.22)}
+.chip.warn .dot{background:var(--yellow);box-shadow:0 0 0 3px rgba(242,196,56,.25)}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid.dim{opacity:.55;pointer-events:none}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:var(--shadow);transition:border-color .3s}
+.card.on{border-color:rgba(4,178,217,.55)}
+.top{display:flex;align-items:center;justify-content:space-between}
+.ico{width:56px;height:56px;border-radius:17px;background:var(--icon-bg);color:var(--blue);display:grid;place-items:center;transition:background .3s,color .3s}
+[data-theme=dark] .ico{color:var(--cyan)}
+.card.on .ico{background:var(--grad);color:#fff}
+.ico svg{width:29px;height:29px;overflow:visible}
+.badge{font-size:12px;font-weight:800;letter-spacing:.07em;color:var(--muted);transition:color .3s}
+.card.on .badge{color:var(--blue)}
+[data-theme=dark] .card.on .badge{color:var(--cyan)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}
+.name{font-weight:700;font-size:18px}
+.desc{font-size:12.5px;color:var(--muted);margin-top:2px}
+.sw{position:relative;width:64px;height:36px;border-radius:999px;border:0;padding:0;background:#b9c4d0;cursor:pointer;flex:none;transition:background .3s}
+[data-theme=dark] .sw{background:#33506b}
+.sw:before{content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.4,.2,.2,1)}
+.card.on .sw{background:var(--grad)}
+.card.on .sw:before{transform:translateX(28px)}
+.sw:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
+.sw.busy{pointer-events:none}
+.sw.busy:after{content:"";position:absolute;top:10px;left:10px;width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(3,90,166,.25);border-top-color:var(--blue);animation:spin .7s linear infinite}
+.card.on .sw.busy:after{left:38px}
+.card.on .fan{animation:spin 1s linear infinite;transform-box:view-box;transform-origin:12px 12px}
+.card.on .wind{animation:wind 1.4s ease-in-out infinite}
+.card.on .wf path{animation:pulse 1.6s ease-in-out infinite}
+.card.on .wf path:nth-child(2){animation-delay:.2s}
+.card.on .wf path:nth-child(1){animation-delay:.4s}
+footer{text-align:center;font-size:12px;color:var(--muted);margin-top:22px}
+#loader{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .45s,visibility .45s}
+#loader.hide{opacity:0;visibility:hidden}
+.ring{position:relative;width:84px;height:84px}
+.ring i{position:absolute;inset:0;border-radius:50%;border:4px solid transparent;animation:spin 1.2s linear infinite}
+.ring i:nth-child(1){border-top-color:var(--blue)}
+.ring i:nth-child(2){inset:10px;border-top-color:var(--sky);animation-duration:1.6s;animation-direction:reverse}
+.ring i:nth-child(3){inset:20px;border-top-color:var(--cyan);animation-duration:1s}
+.ring b{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border-radius:50%;background:var(--yellow);animation:beat 1.2s ease-in-out infinite}
+#loadmsg{font-size:13px;color:var(--muted);text-align:center;padding:0 24px}
+.btn{border:0;border-radius:12px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;background:var(--grad);color:#fff}
+.btn.ghost{background:var(--icon-bg);color:var(--text)}
+#loadcfg{display:none}
+#modal{position:fixed;inset:0;z-index:60;background:rgba(5,20,36,.55);display:none;align-items:center;justify-content:center;padding:16px}
+#modal.show{display:flex}
+.sheet{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+.sheet h2{margin:0 0 4px;font-size:18px}
+.sheet p{margin:0 0 14px;font-size:12.5px;color:var(--muted)}
+.sheet label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+.sheet input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+.sheet input:focus{outline:2px solid var(--cyan);border-color:transparent}
+.row{display:flex;gap:10px;margin-top:18px}
+.row .btn{flex:1}
+#dlg{position:fixed;inset:0;z-index:70;background:rgba(5,20,36,.55);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+#dlg.show{opacity:1;visibility:visible}
+#dlg .sheet{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:var(--shadow);text-align:center;transform:translateY(12px) scale(.97);transition:transform .25s}
+#dlg.show .sheet{transform:none}
+.dlgico{width:54px;height:54px;border-radius:17px;margin:0 auto 14px;display:grid;place-items:center;background:rgba(242,196,56,.22);color:#a67c00}
+[data-theme=dark] .dlgico{color:var(--yellow)}
+.dlgico svg{width:27px;height:27px}
+#dlg h2{margin:0 0 6px;font-size:18px}
+#dlg p{margin:0;font-size:13.5px;color:var(--muted)}
+.btn.warn{background:var(--yellow);color:#3b2c00}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes beat{50%{transform:scale(.55);opacity:.7}}
+@keyframes wind{50%{transform:translateX(3px)}}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.card.on .fan,.card.on .wind,.card.on .wf path{animation:none}}
+</style>
+</head>
+<body>
+<div id="loader">
+  <div class="ring"><i></i><i></i><i></i><b></b></div>
+  <div id="loadmsg">Menghubungkan ke cloud…</div>
+  <button class="btn ghost" id="loadcfg">Buka pengaturan</button>
+</div>
+
+<div id="modal">
+  <form class="sheet" id="form" autocomplete="off">
+    <h2>Pengaturan Koneksi</h2>
+    <p>Data disimpan hanya di browser ini (localStorage), tidak ada yang tertulis di file halaman.</p>
+    <label for="f-host">Host broker</label>
+    <input id="f-host" placeholder="xxxx.ala.asia-southeast1.emqxsl.com" required>
+    <label for="f-port">Port WebSocket (WSS) — EMQX: 8084, HiveMQ: 8884</label>
+    <input id="f-port" type="number" min="1" max="65535" placeholder="8084" required>
+    <label for="f-user">Username</label>
+    <input id="f-user" required>
+    <label for="f-pass">Password</label>
+    <input id="f-pass" type="password" required>
+    <label for="f-base">Topik dasar</label>
+    <input id="f-base" placeholder="brutalx/relay" required>
+    <div class="row">
+      <button type="button" class="btn ghost" id="f-cancel">Batal</button>
+      <button type="submit" class="btn">Simpan &amp; sambung</button>
+    </div>
+  </form>
+</div>
+
+<div id="dlg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+  <div class="dlgico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+  <h2 id="dlgT"></h2><p id="dlgM"></p>
+  <div class="row"><button class="btn ghost" id="dlgNo">Batal</button><button class="btn warn" id="dlgYes">Matikan</button></div>
+</div></div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></div>
+      <div><h1>Relay Control</h1><div class="sub">Akses jarak jauh</div></div>
+    </div>
+    <div class="actions">
+      <button class="icon-btn" id="cfg" title="Pengaturan" aria-label="Pengaturan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="icon-btn" id="theme" title="Ganti tema" aria-label="Ganti tema"></button>
+    </div>
+  </header>
+  <div class="chips">
+    <span class="chip" id="chipBroker"><i class="dot"></i><span>&hellip;</span></span>
+    <span class="chip" id="chipDev"><i class="dot"></i><span>&hellip;</span></span>
+  </div>
+  <main class="grid" id="grid"></main>
+  <footer>Remote via MQTT &middot; ESP32 Relay Controller</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>window.mqtt||document.write('<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"><\/script>')</script>
+<script>
+var SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+var MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+var S='fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+var DEV=[
+ {id:'wifi',name:'WiFi',desc:'Daya router / access point',
+  ico:'<svg class="wf" viewBox="0 0 24 24" '+S+'><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>'},
+ {id:'kipas',name:'Kipas',desc:'Kipas angin ruangan',
+  ico:'<svg viewBox="0 0 24 24" '+S+'><g class="fan" fill="currentColor" fill-opacity=".22" stroke-width="1.6"><path d="M12 12c0-4 1-8 4-8 2.5 0 3 3 1.5 5-1 1.3-3 2.5-5.5 3z"/><path d="M12 12c4 0 8 1 8 4 0 2.5-3 3-5 1.5-1.3-1-2.5-3-3-5.5z"/><path d="M12 12c0 4-1 8-4 8-2.5 0-3-3-1.5-5 1-1.3 3-2.5 5.5-3z"/><path d="M12 12c-4 0-8-1-8-4 0-2.5 3-3 5-1.5 1.3 1 2.5 3 3 5.5z"/></g><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>'},
+ {id:'exhaust',name:'Exhaust',desc:'Exhaust / ventilasi udara',
+  ico:'<svg class="wind" viewBox="0 0 24 24" '+S+'><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>'}
+];
+function $(i){return document.getElementById(i)}
+
+$('grid').innerHTML=DEV.map(function(d){
+  return '<section class="card" id="c-'+d.id+'"><div class="top"><div class="ico">'+d.ico+'</div><span class="badge" id="b-'+d.id+'">OFF</span></div>'+
+  '<div class="foot"><div><div class="name">'+d.name+'</div><div class="desc">'+d.desc+'</div></div>'+
+  '<button class="sw" id="s-'+d.id+'" role="switch" aria-checked="false" aria-label="'+d.name+'"></button></div></section>';
+}).join('');
+
+/* ---------- tema ---------- */
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  $('theme').innerHTML=t==='dark'?SUN:MOON;
+  try{localStorage.setItem('theme',t)}catch(e){}
+}
+var th=null;try{th=localStorage.getItem('theme')}catch(e){}
+if(!th)th=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';
+setTheme(th);
+$('theme').onclick=function(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};
+
+/* ---------- UI helpers ---------- */
+var busy={},timers={},cfg=null,client=null,brokerUp=false,devOnline=null,gotState=false,t0=Date.now();
+function chip(id,cls,txt){var e=$(id);e.className='chip '+cls;e.lastChild.textContent=txt}
+function showLoader(m,withBtn){$('loadmsg').textContent=m;$('loadcfg').style.display=withBtn?'inline-block':'none';$('loader').classList.remove('hide')}
+function hideLoader(){$('loader').classList.add('hide')}
+function chips(){
+  if(brokerUp)chip('chipBroker','ok','Cloud terhubung');else chip('chipBroker','warn','Cloud terputus');
+  if(devOnline===null)chip('chipDev','','Menunggu perangkat…');
+  else if(devOnline)chip('chipDev','ok','Perangkat online');
+  else chip('chipDev','warn','Perangkat offline');
+  $('grid').classList.toggle('dim',!brokerUp||devOnline===false);
+}
+function render(d){
+  DEV.forEach(function(v){
+    var on=!!d[v.id];
+    $('c-'+v.id).classList.toggle('on',on);
+    $('s-'+v.id).setAttribute('aria-checked',on);
+    $('b-'+v.id).textContent=on?'ON':'OFF';
+    done(v.id);
+  });
+}
+function done(id){busy[id]=false;clearTimeout(timers[id]);$('s-'+id).classList.remove('busy')}
+
+/* ---------- konfigurasi ---------- */
+var DEFAULTS={host:'r7d711dd.ala.asia-southeast1.emqxsl.com',port:8084,user:'brutalx',base:'brutalx/relay'};
+function fixPort(c){
+  /* EMQX Cloud: WSS = 8084 (8884 itu milik HiveMQ). Perbaiki config lama yang salah port. */
+  if(/emqxsl\.com|emqx\.io/i.test(c.host)&&(!c.port||c.port===8884||c.port===8883))c.port=8084;
+  return c;
+}
+function loadCfg(){try{var c=JSON.parse(localStorage.getItem('relayCfg')||'null');return c&&c.host&&c.user&&c.pass&&c.base?fixPort(c):null}catch(e){return null}}
+function openForm(){
+  var c=cfg||DEFAULTS;
+  $('f-host').value=c.host||'';$('f-port').value=c.port||8084;$('f-user').value=c.user||'';$('f-pass').value=c.pass||'';$('f-base').value=c.base||'';
+  $('modal').classList.add('show');
+}
+$('cfg').onclick=openForm;
+$('loadcfg').onclick=openForm;
+$('f-cancel').onclick=function(){$('modal').classList.remove('show')};
+$('form').onsubmit=function(e){
+  e.preventDefault();
+  var c={host:$('f-host').value.trim().replace(/^[a-z]+:\/\//,'').replace(/[:\/].*$/,''),
+         port:parseInt($('f-port').value,10)||8084,user:$('f-user').value.trim(),pass:$('f-pass').value,
+         base:$('f-base').value.trim().replace(/^\/+|\/+$/g,'')};
+  c=fixPort(c);
+  try{localStorage.setItem('relayCfg',JSON.stringify(c))}catch(x){}
+  cfg=c;$('modal').classList.remove('show');connect();
+};
+
+/* ---------- MQTT ---------- */
+var lastErr='';
+function connect(){
+  if(client){try{client.end(true)}catch(e){}client=null}
+  brokerUp=false;devOnline=null;gotState=false;lastErr='';chips();
+  showLoader('Menghubungkan ke cloud…',false);
+  if(typeof mqtt==='undefined'){showLoader('Library MQTT gagal dimuat (cek internet / CDN diblokir).',true);return}
+  var base=cfg.base;
+  var failTimer=setTimeout(function(){if(!brokerUp)showLoader('Gagal terhubung'+(lastErr?' ('+lastErr+')':'')+'. Periksa host, port (EMQX=8084), username, password.',true)},10000);
+  var url='wss://'+cfg.host+':'+(cfg.port||8084)+'/mqtt';
+  client=mqtt.connect(url,{
+    username:cfg.user,password:cfg.pass,protocolVersion:4,
+    clientId:'web-'+Math.random().toString(16).slice(2,10),
+    reconnectPeriod:3000,connectTimeout:8000,keepalive:30,clean:true
+  });
+  client.on('connect',function(){
+    brokerUp=true;lastErr='';clearTimeout(failTimer);chips();
+    /* subscribe dulu, baru UI dibuka; pesan retained (state/status) akan datang otomatis */
+    client.subscribe([base+'/state',base+'/status'],{qos:1},function(err,granted){
+      var denied=err||(granted&&granted.some(function(g){return g.qos===128}));
+      if(denied){lastErr='subscribe ditolak (cek ACL broker)';showLoader('Gagal subscribe: '+lastErr,true)}
+    });
+    /* kalau 6 detik tidak ada kabar dari perangkat, tampilkan petunjuk topik */
+    setTimeout(function(){if(brokerUp&&devOnline===null)chip('chipDev','warn','Tidak ada data di topik "'+base+'"')},6000);
+    setTimeout(function(){if(brokerUp)hideLoader()},gotState?0:2500);
+  });
+  client.on('error',function(e){
+    lastErr=(e&&e.message)||String(e);
+    if(/not authorized|bad user|identifier/i.test(lastErr))lastErr='username/password ditolak';
+    console.warn('MQTT error',e);
+  });
+  client.on('close',function(){
+    brokerUp=false;chips();
+    DEV.forEach(function(v){done(v.id)});
+  });
+  client.on('message',function(topic,msg){
+    var s=msg.toString();
+    if(topic===base+'/state'){try{render(JSON.parse(s));gotState=true;hideLoader()}catch(e){}}
+    else if(topic===base+'/status'){devOnline=(s==='online');chips()}
+  });
+}
+var dlgRes=null;
+function ask(t,m,ok){
+  return new Promise(function(res){
+    $('dlgT').textContent=t;$('dlgM').textContent=m;$('dlgYes').textContent=ok;
+    dlgRes=res;$('dlg').classList.add('show');$('dlgNo').focus();
+  });
+}
+function dlgClose(v){$('dlg').classList.remove('show');if(dlgRes){var r=dlgRes;dlgRes=null;r(v)}}
+$('dlgYes').onclick=function(){dlgClose(true)};
+$('dlgNo').onclick=function(){dlgClose(false)};
+$('dlg').addEventListener('click',function(e){if(e.target===this)dlgClose(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&dlgRes)dlgClose(false)});
+function send(id,want){
+  if(!client||!brokerUp)return;
+  busy[id]=true;$('s-'+id).classList.add('busy');
+  timers[id]=setTimeout(function(){done(id)},6000);   // tanpa balasan -> lepas spinner
+  client.publish(cfg.base+'/cmd/'+id,want?'1':'0',{qos:1},function(err){if(err){done(id);console.warn('publish gagal',err)}});
+}
+function toggle(id){
+  if(busy[id]||!client||!brokerUp)return;
+  var want=!$('c-'+id).classList.contains('on');
+  if(id==='wifi'&&!want){
+    ask('Matikan WiFi?','Koneksi ke perangkat bisa terputus.','Matikan').then(function(ok){if(ok)send(id,want)});
+    return;
+  }
+  send(id,want);
+}
+$('grid').addEventListener('click',function(e){
+  var b=e.target.closest?e.target.closest('.sw'):null;
+  if(b)toggle(b.id.slice(2));
+});
+
+/* ---------- mulai ---------- */
+cfg=loadCfg();
+chips();
+if(cfg){connect()}else{hideLoader();openForm()}
+</script>
+</body>
+</html>
